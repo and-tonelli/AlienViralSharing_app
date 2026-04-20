@@ -6,7 +6,7 @@ if (FALSE) {
 }
 library(DT)
 library(stringr)
-library(shiny)choic
+library(shiny)
 library(ggplot2)
 if (FALSE) {
   library(munsell)
