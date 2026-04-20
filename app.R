@@ -11,6 +11,7 @@ library(ggplot2)
 if (FALSE) {
   library(munsell)
 }
+library(shinyWidgets)
 
 load("data/DataForShinyVirAliNet.RData")
 
