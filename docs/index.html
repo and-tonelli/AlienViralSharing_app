@@ -2,9 +2,20 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>My Shiny App</title>
+  <title>VirAliNet</title>
 
   <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    /* App container must have size */
+    #root {
+      height: 100vh;
+      width: 100%;
+    }
+
     /* Fullscreen loader */
     #custom-loader {
       position: fixed;
@@ -36,33 +47,46 @@
 
 <body>
 
-<div id="custom-loader">
-  <div class="spinner"></div>
-  <p><strong>Initializing VirAliNet...</strong></p>
-  <p>Please wait, this initial setup may take a couple of minutes.</p>
-</div>
+  <!-- Custom loader -->
+  <div id="custom-loader">
+    <div class="spinner"></div>
+    <p><strong>Initializing VirAliNet...</strong></p>
+    <p>Please wait, this initial setup may take a couple of minutes.</p>
+  </div>
 
-<!-- Shinylive app -->
-<div id="root"></div>
+  <!-- Shinylive app -->
+  <div id="root"></div>
 
-<script type="module">
-  import { runExportedApp } from "./shinylive/shinylive.js";
+  <script type="module">
+    import { runExportedApp } from "./shinylive/shinylive.js";
 
-  runExportedApp({
+    runExportedApp({
+      id: "root",
+      appEngine: "r",
+      relPath: "",
+    });
 
-        id: "root",
+    const loader = document.getElementById("custom-loader");
+    const root = document.getElementById("root");
 
-        appEngine: "r",
+    // Remove loader when app mounts
+    const observer = new MutationObserver(() => {
+      if (root.children.length > 0) {
+        loader.remove();
+        observer.disconnect();
+      }
+    });
 
-        relPath: "",
+    observer.observe(root, {
+      childList: true,
+      subtree: true
+    });
 
-      });
-
-  // Remove loader once app is ready
-  setTimeout(() => {
-    document.getElementById("custom-loader").style.display = "none";
-  }, 5000); // adjust timing if needed
-</script>
+    // Safety fallback (never hang forever)
+    setTimeout(() => {
+      loader.remove();
+    }, 20000);
+  </script>
 
 </body>
 </html>
