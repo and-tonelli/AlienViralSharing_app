@@ -12,6 +12,7 @@ if (FALSE) {
   library(munsell)
 }
 library(shinyWidgets)
+library(waiter)
 
 load("data/DataForShinyVirAliNet.RData")
 
@@ -25,6 +26,19 @@ newui <- bslib::page_sidebar(
   ),
   
   title = "VirAliNet: Alien-driven Viral Sharing",
+  
+  # useWaiter(), 
+  # waiterPreloader(
+  #   html = tagList(
+  #     spin_6(color = "#7B8A8B"), 
+  #     br(),
+  #     h4("Initializing VirAliNet...", 
+  #        style = "color: #7B8A8B; font-family: Verdana; font-weight: 300;"),
+  #     p("Please wait, this initial setup may take a couple of minutes.", 
+  #       style = "color: #7B8A8B; font-family: Verdana; font-weight: 300; font-size: 14px;")
+  #   ),
+  #   color = "#F2F2F2" 
+  # ),
   
   tags$head(
     tags$style(HTML("
@@ -125,11 +139,11 @@ server <- function(input, output, session) {
   
   # --- DYNAMIC CASCADING MENUS ---
   
-  # 1. Initialize Continent choices
+  # 1. Initialize Continent choices (Runs once on startup)
   observe({
     req(exists("nested_tab"))
     conts <- sort(unique(nested_tab$Continent))
-    updateSelectInput(session, "continent_select", choices = c("All", conts))
+    updateSelectInput(session, "continent_select", choices = c("All", conts), selected = "All")
   })
   
   # 2. Update Region based on Continent
@@ -141,12 +155,14 @@ server <- function(input, output, session) {
     }
     regs <- sort(unique(df$Landmass))
     updateSelectInput(session, "reg_select", choices = c("All", regs), selected = "All")
-  }, ignoreInit = TRUE)
+  }, ignoreInit = FALSE) # Changed to FALSE to trigger on load
   
-  # 3. Update Species based on filters (removed use_alt to avoid resetting selection)
+  # 3. Update Species based on filters
   observeEvent(c(input$continent_select, input$reg_select), {
+    # Get the base data
     df <- current_link_data()
     
+    # Filter only if "All" is NOT selected
     if (input$continent_select != "All") {
       df <- df %>% filter(Continent == input$continent_select)
     }
@@ -157,23 +173,27 @@ server <- function(input, output, session) {
     
     sps <- sort(unique(df$Alien))
     curr_sp <- isolate(input$sp_select)
+    
+    # Keep the current selection if it's still in the list, otherwise default to All
     sel <- if (!is.null(curr_sp) && curr_sp %in% sps) curr_sp else "All"
     
     updateSelectInput(session, "sp_select",
                       choices = c("All", sps),
                       selected = sel)
-  }, ignoreInit = TRUE)
+  }, ignoreInit = FALSE) # Changed to FALSE to trigger on load
   
   # --- FILTER DATA FOR MAP ---
   filtered_data <- reactive({
     df <- current_link_data()
-    if (input$continent_select != "All") {
+    
+    # Filtering logic that defaults to everything if "All" is selected
+    if (!is.null(input$continent_select) && input$continent_select != "All") {
       df <- df %>% filter(Continent == input$continent_select)
     }
-    if (input$reg_select != "All") {
+    if (!is.null(input$reg_select) && input$reg_select != "All") {
       df <- df %>% filter(Landmass == input$reg_select)
     }
-    if (input$sp_select != "All") {
+    if (!is.null(input$sp_select) && input$sp_select != "All") {
       df <- df %>% filter(Alien == input$sp_select)
     }
     df
@@ -181,27 +201,42 @@ server <- function(input, output, session) {
   
   # --- MAP RENDERING ---
   
-  # Initial Map Load (One-time)
   output$map <- renderLeaflet({
+    
     leaflet() %>%
+      
       addProviderTiles(providers$CartoDB.Positron) %>%
+      
       addControl(
+        
         html = "<div id='map-help-container'>
+
                   <div id='help-collapsed' style='display: none; cursor: pointer; background: white; padding: 6px 10px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.2); font-weight: bold; font-size: 13px; color: #2a3a82;' onclick=\"document.getElementById('help-expanded').style.display='block'; this.style.display='none';\" title='Show help'>
+
                     &#8505;
+
                   </div>
+
                   <div id='help-expanded' style='position: relative; font-size: 12px; color: #333; background: white; padding: 6px 20px 6px 10px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.2); line-height: 1.4;'>
+
                     <span style='position: absolute; top: 2px; right: 5px; cursor: pointer; font-size: 16px; font-weight: bold; color: #888; line-height: 1;' onclick=\"document.getElementById('help-collapsed').style.display='block'; this.parentElement.style.display='none';\" title='Close'>&times;</span>
-                    Click the centroid of an established alien range (<strong style='color:#ab3232;'>red</strong> marker) to see sharing statistics.<br>
+
+                    Click the centroid of an established alien range (<strong style='color:#ab3232;'>red</strong> marker) to view sharing statistics.<br>
+
                     Click the centroid of a native range (<strong style='color:#389667;'>green</strong> marker) to view details.
+
                   </div>
+
                 </div>",
+        
         position = "bottomleft")
+    
   })
   
-  # Incremental Update (Using LeafletProxy to avoid reset on switch/filter)
+  # Incremental Update
   observe({
     data_to_show <- filtered_data()
+    req(nrow(data_to_show) >= 0)
     
     leafletProxy("map", data = data_to_show) %>%
       clearMarkers() %>%

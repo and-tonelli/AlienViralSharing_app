@@ -1,28 +1,63 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Shiny App</title>
-    <script
-      src="./shinylive/load-shinylive-sw.js"
-      type="module"
-    ></script>
-    <script type="module">
-      import { runExportedApp } from "./shinylive/shinylive.js";
-      runExportedApp({
-        id: "root",
-        appEngine: "r",
-        relPath: "",
-      });
-    </script>
-    <link rel="stylesheet" href="./shinylive/style-resets.css" />
-    <link rel="stylesheet" href="./shinylive/shinylive.css" />
-    
-  </head>
-  <body>
-    
-    <div style="height: 100vh; width: 100vw" id="root"></div>
-    
-  </body>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>My Shiny App</title>
+
+  <style>
+    /* Fullscreen loader */
+    #custom-loader {
+      position: fixed;
+      inset: 0;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      font-family: sans-serif;
+      z-index: 9999;
+    }
+
+    .spinner {
+      border: 6px solid #eee;
+      border-top: 6px solid #3b82f6;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="custom-loader">
+  <div class="spinner"></div>
+  <p><strong>Loading app…</strong></p>
+  <p>This may take 1–2 minutes on first load.</p>
+</div>
+
+<!-- Shinylive app -->
+<div id="root"></div>
+
+<script type="module">
+  import { runApp } from "./shinylive.js";
+
+  runApp({
+    appDir: "app",
+    container: document.getElementById("root"),
+  });
+
+  // Remove loader once app is ready
+  setTimeout(() => {
+    document.getElementById("custom-loader").style.display = "none";
+  }, 5000); // adjust timing if needed
+</script>
+
+</body>
 </html>
