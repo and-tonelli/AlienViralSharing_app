@@ -1,8 +1,14 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VirAliNet</title>
+
+  <!-- REQUIRED for Shinylive -->
+  <script src="./shinylive/load-shinylive-sw.js" type="module"></script>
+  <link rel="stylesheet" href="./shinylive/style-resets.css" />
+  <link rel="stylesheet" href="./shinylive/shinylive.css" />
 
   <style>
     html, body {
@@ -10,13 +16,12 @@
       margin: 0;
     }
 
-    /* App container must have size */
     #root {
       height: 100vh;
       width: 100%;
     }
 
-    /* Fullscreen loader */
+    /* Loader */
     #custom-loader {
       position: fixed;
       inset: 0;
@@ -47,14 +52,14 @@
 
 <body>
 
-  <!-- Custom loader -->
+  <!-- Loader -->
   <div id="custom-loader">
     <div class="spinner"></div>
     <p><strong>Initializing VirAliNet...</strong></p>
-    <p>Please wait, this initial setup may take a couple of minutes.</p>
+    <p>Please wait, this may take a couple of minutes.</p>
   </div>
 
-  <!-- Shinylive app -->
+  <!-- App -->
   <div id="root"></div>
 
   <script type="module">
@@ -69,23 +74,21 @@
     const loader = document.getElementById("custom-loader");
     const root = document.getElementById("root");
 
-    // Remove loader when app mounts
+    // Remove loader when app actually mounts
     const observer = new MutationObserver(() => {
       if (root.children.length > 0) {
-        loader.remove();
+        loader.style.opacity = "0";
+        setTimeout(() => loader.remove(), 300); // small fade-out
         observer.disconnect();
       }
     });
 
-    observer.observe(root, {
-      childList: true,
-      subtree: true
-    });
+    observer.observe(root, { childList: true, subtree: true });
 
-    // Safety fallback (never hang forever)
+    // Fallback safety (never stuck forever)
     setTimeout(() => {
-      loader.remove();
-    }, 20000);
+      if (loader) loader.remove();
+    }, 25000);
   </script>
 
 </body>
