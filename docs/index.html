@@ -3,11 +3,58 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Shiny App</title>
+    <title>VirAliNet</title>
     <script
       src="./shinylive/load-shinylive-sw.js"
       type="module"
     ></script>
+    <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    #root {
+      height: 100vh;
+      width: 100%;
+    }
+
+    /* Loader */
+    #custom-loader {
+      position: fixed;
+      inset: 0;
+      background: #F2F2F2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      font-family: sans-serif;
+      z-index: 9999;
+    }
+
+    .spinner {
+      border: 6px solid #F2F2F2;
+      border-top: 6px solid #7B8A8B;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+
+<body>
+      <!-- Loader -->
+  <div id="custom-loader">
+    <div class="spinner"></div>
+    <p><strong>Initializing VirAliNet...</strong></p>
+    <p>Please wait, this may take a couple of minutes.</p>
+  </div>
     <script type="module">
       import { runExportedApp } from "./shinylive/shinylive.js";
       runExportedApp({
