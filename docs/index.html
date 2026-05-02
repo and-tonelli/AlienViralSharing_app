@@ -46,12 +46,17 @@
 <div id="root"></div>
 
 <script type="module">
-  import { runApp } from "./shinylive.js";
+  import { runExportedApp } from "./shinylive/shinylive.js";
 
-  runApp({
-    appDir: "app",
-    container: document.getElementById("root"),
-  });
+  runExportedApp({
+
+        id: "root",
+
+        appEngine: "r",
+
+        relPath: "",
+
+      });
 
   // Remove loader once app is ready
   setTimeout(() => {
