@@ -1,14 +1,16 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VirAliNet</title>
-    <script
-      src="./shinylive/load-shinylive-sw.js"
-      type="module"
-    ></script>
-    <style>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VirAliNet</title>
+
+  <!-- REQUIRED -->
+  <script src="./shinylive/load-shinylive-sw.js" type="module"></script>
+  <link rel="stylesheet" href="./shinylive/style-resets.css" />
+  <link rel="stylesheet" href="./shinylive/shinylive.css" />
+
+  <style>
     html, body {
       height: 100%;
       margin: 0;
@@ -19,7 +21,6 @@
       width: 100%;
     }
 
-    /* Loader */
     #custom-loader {
       position: fixed;
       inset: 0;
@@ -30,6 +31,7 @@
       flex-direction: column;
       font-family: sans-serif;
       z-index: 9999;
+      transition: opacity 0.3s ease;
     }
 
     .spinner {
@@ -49,27 +51,46 @@
 </head>
 
 <body>
-      <!-- Loader -->
+
+  <!-- Loader -->
   <div id="custom-loader">
     <div class="spinner"></div>
     <p><strong>Initializing VirAliNet...</strong></p>
     <p>Please wait, this may take a couple of minutes.</p>
   </div>
-    <script type="module">
-      import { runExportedApp } from "./shinylive/shinylive.js";
-      runExportedApp({
-        id: "root",
-        appEngine: "r",
-        relPath: "",
-      });
-    </script>
-    <link rel="stylesheet" href="./shinylive/style-resets.css" />
-    <link rel="stylesheet" href="./shinylive/shinylive.css" />
-    
-  </head>
-  <body>
-    
-    <div style="height: 100vh; width: 100vw" id="root"></div>
-    
-  </body>
+
+  <!-- App container -->
+  <div id="root"></div>
+
+  <!-- Run AFTER root exists -->
+  <script type="module">
+    import { runExportedApp } from "./shinylive/shinylive.js";
+
+    const root = document.getElementById("root");
+    const loader = document.getElementById("custom-loader");
+
+    runExportedApp({
+      id: "root",
+      appEngine: "r",
+      relPath: "",
+    });
+
+    // Remove loader when app mounts
+    const observer = new MutationObserver(() => {
+      if (root.children.length > 0) {
+        loader.style.opacity = "0";
+        setTimeout(() => loader.remove(), 300);
+        observer.disconnect();
+      }
+    });
+
+    observer.observe(root, { childList: true, subtree: true });
+
+    // Fallback
+    setTimeout(() => {
+      if (loader) loader.remove();
+    }, 25000);
+  </script>
+
+</body>
 </html>
