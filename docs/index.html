@@ -1,96 +1,118 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VirAliNet</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VirAliNet</title>
+    <script src="./shinylive/load-shinylive-sw.js" type="module"></script>
+    <script type="module">
+      import { runExportedApp } from "./shinylive/shinylive.js";
+      runExportedApp({
+        id: "root",
+        appEngine: "r",
+        relPath: "",
+      });
+    </script>
+    <link rel="stylesheet" href="./shinylive/style-resets.css" />
+    <link rel="stylesheet" href="./shinylive/shinylive.css" />
 
-  <!-- REQUIRED -->
-  <script src="./shinylive/load-shinylive-sw.js" type="module"></script>
-  <link rel="stylesheet" href="./shinylive/style-resets.css" />
-  <link rel="stylesheet" href="./shinylive/shinylive.css" />
-
-  <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-    }
-
-    #root {
-      height: 100vh;
-      width: 100%;
-    }
-
-    #custom-loader {
-      position: fixed;
-      inset: 0;
-      background: #F2F2F2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      font-family: sans-serif;
-      z-index: 9999;
-      transition: opacity 0.3s ease;
-    }
-
-    .spinner {
-      border: 6px solid #F2F2F2;
-      border-top: 6px solid #7B8A8B;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
-      margin-bottom: 20px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  </style>
-</head>
-
-<body>
-
-  <!-- Loader -->
-  <div id="custom-loader">
-    <div class="spinner"></div>
-    <p><strong>Initializing VirAliNet...</strong></p>
-    <p>Please wait, this may take a couple of minutes.</p>
-  </div>
-
-  <!-- App container -->
-  <div id="root"></div>
-
-  <!-- Run AFTER root exists -->
-  <script type="module">
-    import { runExportedApp } from "./shinylive/shinylive.js";
-
-    const root = document.getElementById("root");
-    const loader = document.getElementById("custom-loader");
-
-    runExportedApp({
-      id: "root",
-      appEngine: "r",
-      relPath: "",
-    });
-
-    // Remove loader when app mounts
-    const observer = new MutationObserver(() => {
-      if (root.children.length > 0) {
-        loader.style.opacity = "0";
-        setTimeout(() => loader.remove(), 300);
-        observer.disconnect();
+    <style>
+      #custom-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        font-family: sans-serif;
+        color: #333;
       }
-    });
 
-    observer.observe(root, { childList: true, subtree: true });
+      #custom-loader p {
+        margin: 0;
+        font-size: 15px;
+        color: #555;
+      }
 
-    // Fallback
-    setTimeout(() => {
-      if (loader) loader.remove();
-    }, 25000);
-  </script>
+      #custom-loader p:first-of-type {
+        font-size: 17px;
+        color: #111;
+      }
 
-</body>
+      .spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid #e0e0e0;
+        border-top-color: #7B8A8B;
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+        margin-bottom: 8px;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      #custom-loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="custom-loader">
+      <div class="spinner"></div>
+      <p><strong>Initializing VirAliNet...</strong></p>
+      <p>Please wait, this may take a couple of minutes.</p>
+    </div>
+
+    <div style="height: 100vh; width: 100vw" id="root"></div>
+
+    <script>
+      (function () {
+        const loader = document.getElementById("custom-loader");
+
+        function hideLoader() {
+          loader.classList.add("hidden");
+          setTimeout(() => loader.remove(), 450);
+        }
+
+        // Strategy 1: intercept Shiny/shinylive postMessages
+        window.addEventListener("message", function (e) {
+          if (
+            e.data &&
+            (e.data.type === "shiny:connected" ||
+              e.data.type === "applicationReady" ||
+              (typeof e.data === "string" && e.data.includes("ready")))
+          ) {
+            hideLoader();
+          }
+        });
+
+        // Strategy 2: observe #root until Shiny injects content
+        const observer = new MutationObserver(function () {
+          const root = document.getElementById("root");
+          if (root && root.children.length > 0) {
+            // Give Shiny a moment to fully paint before hiding
+            setTimeout(hideLoader, 1500);
+            observer.disconnect();
+          }
+        });
+
+        observer.observe(document.getElementById("root"), {
+          childList: true,
+          subtree: true,
+        });
+
+        // Strategy 3: hard timeout fallback (3 minutes)
+        setTimeout(hideLoader, 180000);
+      })();
+    </script>
+
+  </body>
 </html>
