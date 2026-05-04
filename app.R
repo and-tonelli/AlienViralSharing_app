@@ -12,7 +12,6 @@ if (FALSE) {
   library(munsell)
 }
 library(shinyWidgets)
-library(waiter)
 
 load("data/DataForShinyVirAliNet.RData")
 
@@ -203,9 +202,14 @@ server <- function(input, output, session) {
   
   output$map <- renderLeaflet({
     
-    leaflet() %>%
-      
-      addProviderTiles(providers$CartoDB.Positron) %>%
+    data_to_show <- filtered_data()
+    
+    map <- leaflet() %>%
+      addProviderTiles(providers$CartoDB.Positron)
+    
+    if (nrow(data_to_show) == 0) return(map)   # <-- guard clause
+    
+    map %>%
       
       addControl(
         
