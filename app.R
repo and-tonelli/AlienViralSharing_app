@@ -132,6 +132,14 @@ server <- function(input, output, session) {
     if (isTRUE(input$use_alt)) data_and_S2 else data_and_S
   })
   
+  app_ready <- reactiveVal(FALSE)
+  
+  observe({
+    # This fires once link_data is accessible and has rows
+    req(nrow(current_link_data()) > 0)
+    app_ready(TRUE)
+  })
+  
   # Reactive values to track state
   selected_species <- reactiveVal(NULL)
   selected_point_id <- reactiveVal(NULL)
@@ -202,12 +210,14 @@ server <- function(input, output, session) {
   
   output$map <- renderLeaflet({
     
+    req(app_ready())  
+    
     data_to_show <- filtered_data()
     
     map <- leaflet() %>%
       addProviderTiles(providers$CartoDB.Positron)
     
-    if (nrow(data_to_show) == 0) return(map)   # <-- guard clause
+    if (nrow(data_to_show) == 0) return(map)   
     
     map %>%
       
@@ -241,7 +251,11 @@ server <- function(input, output, session) {
   observe({
     data_to_show <- filtered_data()
     req(nrow(data_to_show) >= 0)
-    
+
+      req(nrow(current_link_data()) > 0)
+      app_ready(TRUE)
+      session$sendCustomMessage("appReady", list())   # <-- signals the browser
+
     leafletProxy("map", data = data_to_show) %>%
       clearMarkers() %>%
       addCircleMarkers(

@@ -73,46 +73,26 @@
 
     <div style="height: 100vh; width: 100vw" id="root"></div>
 
-    <script>
-      (function () {
-        const loader = document.getElementById("custom-loader");
+    <<script>
+  (function () {
+    const loader = document.getElementById("custom-loader");
 
-        function hideLoader() {
-          loader.classList.add("hidden");
-          setTimeout(() => loader.remove(), 450);
-        }
+    function hideLoader() {
+      loader.classList.add("hidden");
+      setTimeout(() => loader.remove(), 450);
+    }
 
-        // Strategy 1: intercept Shiny/shinylive postMessages
-        window.addEventListener("message", function (e) {
-          if (
-            e.data &&
-            (e.data.type === "shiny:connected" ||
-              e.data.type === "applicationReady" ||
-              (typeof e.data === "string" && e.data.includes("ready")))
-          ) {
-            hideLoader();
-          }
-        });
+    // Wait for the explicit "appReady" message sent by session$sendCustomMessage
+    window.addEventListener("message", function (e) {
+      if (e.data && e.data.type === "appReady") {
+        hideLoader();
+      }
+    });
 
-        // Strategy 2: observe #root until Shiny injects content
-        const observer = new MutationObserver(function () {
-          const root = document.getElementById("root");
-          if (root && root.children.length > 0) {
-            // Give Shiny a moment to fully paint before hiding
-            setTimeout(hideLoader, 1500);
-            observer.disconnect();
-          }
-        });
-
-        observer.observe(document.getElementById("root"), {
-          childList: true,
-          subtree: true,
-        });
-
-        // Strategy 3: hard timeout fallback (3 minutes)
-        setTimeout(hideLoader, 180000);
-      })();
-    </script>
+    // Hard fallback: hide after 5 minutes no matter what
+    setTimeout(hideLoader, 300000);
+  })();
+</script>
 
   </body>
 </html>
